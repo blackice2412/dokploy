@@ -339,13 +339,57 @@ export const userRouter = createTRPCRouter({
 			z.object({
 				url: z.string(),
 				token: z.string(),
-				appName: z.string(),
+				appName: z.string().optional(),
+				appNames: z.array(z.string()).optional(),
 				dataPoints: z.string(),
 			}),
 		)
 		.query(async ({ input }) => {
 			try {
-				if (!input.appName) {
+				const fetchMetrics = async (appName: string) => {
+					const url = new URL(`${input.url}/metrics/containers`);
+					url.searchParams.append("limit", input.dataPoints);
+					url.searchParams.append("appName", appName);
+					const response = await fetch(url.toString(), {
+						headers: {
+							Authorization: `Bearer ${input.token}`,
+						},
+					});
+
+					if (!response.ok) {
+						throw new Error(
+							`Error ${response.status}: ${response.statusText}. Please verify that the application "${appName}" is running and this service is included in the monitoring configuration.`,
+						);
+					}
+
+					const data = await response.json();
+					if (!Array.isArray(data) || data.length === 0) {
+						throw new Error(
+							[
+								`No monitoring data available for "${appName}". This could be because:`,
+								"",
+								"1. The container was recently started - wait a few minutes for data to be collected",
+								"2. The container is not running - verify its status",
+								"3. The service is not included in your monitoring configuration",
+							].join("\n"),
+						);
+					}
+
+					return data as {
+						containerId: string;
+						containerName: string;
+						containerImage: string;
+						containerLabels: string;
+						containerCommand: string;
+						containerCreated: string;
+					}[];
+				};
+
+				const uniqueAppNames = Array.from(
+					new Set([...(input.appNames || []), ...(input.appName ? [input.appName] : [])]),
+				);
+
+				if (uniqueAppNames.length === 0) {
 					throw new Error(
 						[
 							"No Application Selected:",
@@ -354,40 +398,21 @@ export const userRouter = createTRPCRouter({
 						].join("\n"),
 					);
 				}
-				const url = new URL(`${input.url}/metrics/containers`);
-				url.searchParams.append("limit", input.dataPoints);
-				url.searchParams.append("appName", input.appName);
-				const response = await fetch(url.toString(), {
-					headers: {
-						Authorization: `Bearer ${input.token}`,
-					},
-				});
-				if (!response.ok) {
-					throw new Error(
-						`Error ${response.status}: ${response.statusText}. Please verify that the application "${input.appName}" is running and this service is included in the monitoring configuration.`,
-					);
+
+				if (uniqueAppNames.length === 1) {
+					return await fetchMetrics(uniqueAppNames[0]);
 				}
 
-				const data = await response.json();
-				if (!Array.isArray(data) || data.length === 0) {
-					throw new Error(
-						[
-							`No monitoring data available for "${input.appName}". This could be because:`,
-							"",
-							"1. The container was recently started - wait a few minutes for data to be collected",
-							"2. The container is not running - verify its status",
-							"3. The service is not included in your monitoring configuration",
-						].join("\n"),
-					);
-				}
-				return data as {
-					containerId: string;
-					containerName: string;
-					containerImage: string;
-					containerLabels: string;
-					containerCommand: string;
-					containerCreated: string;
-				}[];
+				const settled = await Promise.allSettled(
+					uniqueAppNames.map((appName) => fetchMetrics(appName)),
+				);
+
+				return settled
+					.filter(
+						(result): result is PromiseFulfilledResult<Awaited<ReturnType<typeof fetchMetrics>>> =>
+							result.status === "fulfilled",
+					)
+					.flatMap((result) => result.value);
 			} catch (error) {
 				throw error;
 			}

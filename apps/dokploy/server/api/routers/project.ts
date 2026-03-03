@@ -225,6 +225,7 @@ export const projectRouter = createTRPCRouter({
 								),
 								columns: {
 									applicationId: true,
+									appName: true,
 									name: true,
 									applicationStatus: true,
 								},
@@ -233,6 +234,7 @@ export const projectRouter = createTRPCRouter({
 								where: buildServiceFilter(mariadb.mariadbId, accessedServices),
 								columns: {
 									mariadbId: true,
+									appName: true,
 									name: true,
 									applicationStatus: true,
 								},
@@ -241,6 +243,7 @@ export const projectRouter = createTRPCRouter({
 								where: buildServiceFilter(mongo.mongoId, accessedServices),
 								columns: {
 									mongoId: true,
+									appName: true,
 									name: true,
 									applicationStatus: true,
 								},
@@ -249,6 +252,7 @@ export const projectRouter = createTRPCRouter({
 								where: buildServiceFilter(mysql.mysqlId, accessedServices),
 								columns: {
 									mysqlId: true,
+									appName: true,
 									name: true,
 									applicationStatus: true,
 								},
@@ -260,6 +264,7 @@ export const projectRouter = createTRPCRouter({
 								),
 								columns: {
 									postgresId: true,
+									appName: true,
 									name: true,
 									applicationStatus: true,
 								},
@@ -268,6 +273,7 @@ export const projectRouter = createTRPCRouter({
 								where: buildServiceFilter(redis.redisId, accessedServices),
 								columns: {
 									redisId: true,
+									appName: true,
 									name: true,
 									applicationStatus: true,
 								},
@@ -276,6 +282,7 @@ export const projectRouter = createTRPCRouter({
 								where: buildServiceFilter(compose.composeId, accessedServices),
 								columns: {
 									composeId: true,
+									appName: true,
 									name: true,
 									composeStatus: true,
 								},
@@ -299,6 +306,7 @@ export const projectRouter = createTRPCRouter({
 						applications: {
 							columns: {
 								applicationId: true,
+								appName: true,
 								name: true,
 								applicationStatus: true,
 							},
@@ -306,31 +314,37 @@ export const projectRouter = createTRPCRouter({
 						mariadb: {
 							columns: {
 								mariadbId: true,
+								appName: true,
 							},
 						},
 						mongo: {
 							columns: {
 								mongoId: true,
+								appName: true,
 							},
 						},
 						mysql: {
 							columns: {
 								mysqlId: true,
+								appName: true,
 							},
 						},
 						postgres: {
 							columns: {
 								postgresId: true,
+								appName: true,
 							},
 						},
 						redis: {
 							columns: {
 								redisId: true,
+								appName: true,
 							},
 						},
 						compose: {
 							columns: {
 								composeId: true,
+								appName: true,
 								name: true,
 								composeStatus: true,
 							},
